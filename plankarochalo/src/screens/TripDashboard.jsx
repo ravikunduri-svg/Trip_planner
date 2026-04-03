@@ -127,8 +127,19 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
 
   async function lockStage(stageId, optionId) {
     if (!me.is_organizer) return
-    await supabase.from('stages').update({ status: 'locked', locked_option_id: optionId }).eq('id', stageId)
-    posthog.capture('stage_locked', { stage_id: stageId, trip_id: trip.id })
+
+    // Optimistic update
+    setStages(prev => prev.map(s =>
+      s.id !== stageId ? s : { ...s, status: 'locked', locked_option_id: optionId }
+    ))
+
+    const { error } = await supabase
+      .from('stages')
+      .update({ status: 'locked', locked_option_id: optionId })
+      .eq('id', stageId)
+
+    if (error) { console.error(error); loadData() }
+    else posthog.capture('stage_locked', { stage_id: stageId, trip_id: trip.id })
   }
 
   async function addOption(stageId, label) {
