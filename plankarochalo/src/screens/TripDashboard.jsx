@@ -4,7 +4,9 @@ import posthog from 'posthog-js'
 import StageCard from '../components/StageCard'
 import TripPulse from '../components/TripPulse'
 import NudgeModal from '../components/NudgeModal'
+import ActivityFeed from '../components/ActivityFeed'
 import { supabase } from '../supabase'
+import { logActivity } from '../lib/activity'
 
 function getSurvivalMeter(progress) {
   if (progress === 100) return '🎉 Trip locked! You actually did it.'
@@ -118,15 +120,22 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
       const { error } = await supabase.from('votes').delete()
         .eq('option_id', optionId).eq('member_id', me.id)
       if (error) { console.error(error); loadData() }
+      else logActivity(trip.id, me.id, 'unvoted', { stage_key: stage.title, option_label: opt?.label })
     } else {
       const { error } = await supabase.from('votes').insert({ option_id: optionId, member_id: me.id })
       if (error) { console.error(error); loadData() }
-      else posthog.capture('vote_cast', { stage_id: stageId })
+      else {
+        posthog.capture('vote_cast', { stage_id: stageId })
+        logActivity(trip.id, me.id, 'voted', { stage_key: stage.title, option_label: opt?.label })
+      }
     }
   }
 
   async function lockStage(stageId, optionId) {
     if (!me.is_organizer) return
+
+    const stage = stages.find(s => s.id === stageId)
+    const opt = stage?.options.find(o => o.id === optionId)
 
     // Optimistic update
     setStages(prev => prev.map(s =>
@@ -139,11 +148,16 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
       .eq('id', stageId)
 
     if (error) { console.error(error); loadData() }
-    else posthog.capture('stage_locked', { stage_id: stageId, trip_id: trip.id })
+    else {
+      posthog.capture('stage_locked', { stage_id: stageId, trip_id: trip.id })
+      logActivity(trip.id, me.id, 'stage_locked', { stage_key: stage?.title, option_label: opt?.label })
+    }
   }
 
   async function addOption(stageId, label) {
+    const stage = stages.find(s => s.id === stageId)
     await supabase.from('options').insert({ stage_id: stageId, label })
+    logActivity(trip.id, me.id, 'option_added', { stage_key: stage?.title, option_label: label })
   }
 
   function copyLink() {
@@ -161,6 +175,7 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
   useEffect(() => {
     if (allLocked && !loading) {
       posthog.capture('trip_locked', { trip_id: trip.id })
+      logActivity(trip.id, me.id, 'trip_locked')
       onAllLocked({ ...trip, stages })
     }
   }, [allLocked])
@@ -270,6 +285,8 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
         </div>
 
         <TripPulse stages={stages} members={members} />
+
+        <ActivityFeed tripId={trip.id} members={members} />
 
         {/* Members */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">

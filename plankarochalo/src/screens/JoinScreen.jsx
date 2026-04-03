@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import posthog from 'posthog-js'
 import { supabase } from '../supabase'
 import { MEMBER_COLORS } from '../data/stageTemplates'
+import { logActivity } from '../lib/activity'
 
 function getInitials(name) {
   return name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -55,6 +56,7 @@ export default function JoinScreen({ tripId, onJoined, onNotFound }) {
 
       localStorage.setItem(`pkc_member_${tripId}`, localKey)
       posthog.capture('member_joined', { trip_id: tripId })
+      logActivity(tripId, member.id, 'joined')
       onJoined(trip, member)
     } catch (e) {
       setError('Something went wrong. Please try again.')

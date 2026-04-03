@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react'
 import posthog from 'posthog-js'
 import { supabase } from '../supabase'
 import { STAGE_TEMPLATES, MEMBER_COLORS } from '../data/stageTemplates'
+import { logActivity } from '../lib/activity'
 
 const VIBES = ['Beach', 'Mountains', 'City', 'Heritage', 'Road Trip', 'Backpacking']
 
@@ -76,6 +77,7 @@ export default function CreateTripScreen({ onBack, onCreated }) {
       }
 
       posthog.capture('trip_created', { vibe, group_size: groupSize })
+      logActivity(trip.id, member.id, 'joined')
       onCreated(trip, member)
     } catch (e) {
       setError('Something went wrong. Please try again.')
