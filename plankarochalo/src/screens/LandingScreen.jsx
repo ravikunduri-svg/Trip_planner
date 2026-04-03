@@ -1,4 +1,4 @@
-export default function LandingScreen({ onStart, onJoin }) {
+export default function LandingScreen({ onStart }) {
   return (
     <div className="max-w-sm mx-auto min-h-dvh flex flex-col bg-white">
       {/* Top */}
@@ -47,7 +47,8 @@ export default function LandingScreen({ onStart, onJoin }) {
       <div className="px-6 mb-8 space-y-2">
         {[
           { icon: '🗳️', text: 'Vote on destination, dates, budget' },
-          { icon: '💬', text: 'Nudge the ones going silent' },
+          { icon: '🔗', text: 'Share a link — anyone can join and vote' },
+          { icon: '⚡', text: 'See votes update live as your group decides' },
           { icon: '🎉', text: 'Lock the plan. Actually go.' },
         ].map(({ icon, text }) => (
           <div key={text} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
@@ -57,19 +58,13 @@ export default function LandingScreen({ onStart, onJoin }) {
         ))}
       </div>
 
-      {/* CTAs */}
+      {/* CTA */}
       <div className="px-6 pb-10 mt-auto space-y-3">
         <button
           onClick={onStart}
           className="w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-lg shadow-violet-200"
         >
           Start a Trip ✈️
-        </button>
-        <button
-          onClick={onJoin}
-          className="w-full bg-white hover:bg-gray-50 active:bg-gray-100 text-violet-600 font-bold py-4 rounded-2xl text-base transition-colors border-2 border-violet-200"
-        >
-          See Demo Trip →
         </button>
         <p className="text-center text-xs text-gray-400 pt-1">
           WhatsApp is great for chaos. This is for decisions.

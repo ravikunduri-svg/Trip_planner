@@ -16,12 +16,12 @@ function Detail({ emoji, label, value }) {
 export default function TripLockedScreen({ trip, onNewTrip }) {
   const [copied, setCopied] = useState(false)
 
-  // Build a map of locked option labels keyed by stage id
+  // Build locked map from stages array (DB shape: locked_option_id, stage_key)
   const locked = {}
-  for (const stage of trip.stages) {
-    if (stage.status === 'locked' && stage.lockedOptionId != null) {
-      const opt = stage.options.find(o => o.id === stage.lockedOptionId)
-      locked[stage.id] = opt?.label
+  for (const stage of (trip.stages || [])) {
+    if (stage.status === 'locked' && stage.locked_option_id) {
+      const opt = stage.options?.find(o => o.id === stage.locked_option_id)
+      locked[stage.stage_key] = opt?.label
     }
   }
 
@@ -32,7 +32,7 @@ export default function TripLockedScreen({ trip, onNewTrip }) {
     `💰 ${locked.budget || '?'} per person\n` +
     `🏠 ${locked.stay || '?'}\n` +
     `🎯 ${locked.activities || '?'}\n` +
-    `👥 ${trip.groupSize} friends\n\n` +
+    `👥 ${trip.group_size} friends\n\n` +
     `Planned with PlanKaroChalo ✈️`
 
   function handleShare() {
@@ -43,16 +43,14 @@ export default function TripLockedScreen({ trip, onNewTrip }) {
 
   return (
     <div className="max-w-sm mx-auto min-h-dvh flex flex-col bg-white">
-      {/* Celebration banner */}
       <div className="bg-gradient-to-br from-violet-600 to-indigo-600 pt-16 pb-10 px-6 text-center">
         <div className="text-5xl mb-3">🎉</div>
         <h1 className="text-2xl font-black text-white mb-1">Trip Locked!</h1>
         <p className="text-violet-200 text-sm">Congratulations. This trip survived group planning.</p>
         <div className="mt-3 text-white font-bold text-xl">{trip.name}</div>
-        <div className="mt-1 text-violet-300 text-sm">{trip.vibe} · {trip.groupSize} friends</div>
+        <div className="mt-1 text-violet-300 text-sm">{trip.vibe} · {trip.group_size} friends</div>
       </div>
 
-      {/* Summary card */}
       <div className="mx-4 -mt-5 bg-white rounded-2xl shadow-xl border border-gray-100 p-4">
         <div className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">What's locked in</div>
         <Detail emoji="🗺️" label="Destination" value={locked.destination} />
@@ -62,11 +60,10 @@ export default function TripLockedScreen({ trip, onNewTrip }) {
         <Detail emoji="🎯" label="Activities"   value={locked.activities}  />
         <div className="mt-3 pt-2.5 border-t border-gray-50 text-xs text-gray-400 flex items-center gap-1.5">
           <span>👥</span>
-          <span>{trip.groupSize} friends · Planned with PlanKaroChalo</span>
+          <span>{trip.group_size} friends · Planned with PlanKaroChalo</span>
         </div>
       </div>
 
-      {/* Actions */}
       <div className="px-4 mt-6 space-y-3">
         <button
           onClick={handleShare}
@@ -79,8 +76,7 @@ export default function TripLockedScreen({ trip, onNewTrip }) {
           onClick={onNewTrip}
           className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 font-bold py-4 rounded-2xl text-base transition-colors"
         >
-          <Plus size={16} />
-          Plan another trip
+          <Plus size={16} /> Plan another trip
         </button>
         <p className="text-center text-xs text-gray-400 italic pt-1">
           Itinerary planning — coming soon ✈️
