@@ -1,0 +1,98 @@
+import { useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
+
+const VIBES = ['Beach', 'Mountains', 'Chill', 'Adventure', 'Party', 'Family-ish']
+
+export default function CreateTripScreen({ onBack, onCreate }) {
+  const [name, setName] = useState('')
+  const [vibe, setVibe] = useState('')
+  const [groupSize, setGroupSize] = useState(6)
+
+  const canCreate = name.trim() && vibe
+
+  return (
+    <div className="max-w-sm mx-auto min-h-dvh flex flex-col bg-white">
+      {/* Nav */}
+      <div className="flex items-center gap-2 px-4 pt-12 pb-4">
+        <button
+          onClick={onBack}
+          className="p-2 -ml-2 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors"
+        >
+          <ArrowLeft size={20} className="text-gray-600" />
+        </button>
+        <h1 className="text-lg font-bold text-gray-900">Plan a new trip</h1>
+      </div>
+
+      <div className="flex-1 px-6 py-2 space-y-6">
+        {/* Name */}
+        <div>
+          <label className="text-sm font-semibold text-gray-700 block mb-2">Trip name</label>
+          <input
+            type="text"
+            placeholder="e.g. Goa Escape, Manali Mission"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            className="w-full border-2 border-gray-200 focus:border-violet-400 rounded-2xl px-4 py-3 text-sm outline-none transition-colors placeholder:text-gray-400"
+          />
+        </div>
+
+        {/* Vibe */}
+        <div>
+          <label className="text-sm font-semibold text-gray-700 block mb-2">Trip vibe</label>
+          <div className="flex flex-wrap gap-2">
+            {VIBES.map(v => (
+              <button
+                key={v}
+                onClick={() => setVibe(v)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  vibe === v
+                    ? 'bg-violet-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Group size */}
+        <div>
+          <label className="text-sm font-semibold text-gray-700 block mb-2">
+            Group size:{' '}
+            <span className="text-violet-600">{groupSize} people</span>
+          </label>
+          <input
+            type="range"
+            min={2}
+            max={15}
+            value={groupSize}
+            onChange={e => setGroupSize(Number(e.target.value))}
+            className="w-full accent-violet-600"
+          />
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span>2</span><span>15</span>
+          </div>
+        </div>
+
+        <div className="bg-violet-50 rounded-2xl p-4 border border-violet-100">
+          <p className="text-sm font-semibold text-violet-700">🚀 How it works</p>
+          <p className="text-xs text-violet-600 mt-1 leading-relaxed">
+            You create the trip, share the link, your group votes on everything — destination, dates, budget, stay, activities. You lock decisions. Trip planned.
+          </p>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="px-6 pb-10 pt-4">
+        <button
+          onClick={() => onCreate({ name: name.trim(), vibe, groupSize })}
+          disabled={!canCreate}
+          className="w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-lg shadow-violet-200 disabled:shadow-none"
+        >
+          {!name.trim() ? 'Enter a trip name' : !vibe ? 'Pick a vibe' : 'Create Trip 🎯'}
+        </button>
+      </div>
+    </div>
+  )
+}
