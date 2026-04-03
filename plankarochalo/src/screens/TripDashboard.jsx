@@ -98,13 +98,29 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
     const opt = stage.options.find(o => o.id === optionId)
     const hasVoted = opt?.votes.includes(me.id)
 
+    // Optimistic update — feels instant
+    setStages(prev => prev.map(s => {
+      if (s.id !== stageId) return s
+      return {
+        ...s,
+        options: s.options.map(o => {
+          if (o.id !== optionId) return o
+          return {
+            ...o,
+            votes: hasVoted ? o.votes.filter(v => v !== me.id) : [...o.votes, me.id],
+          }
+        }),
+      }
+    }))
+
     if (hasVoted) {
-      await supabase.from('votes').delete()
+      const { error } = await supabase.from('votes').delete()
         .eq('option_id', optionId).eq('member_id', me.id)
+      if (error) { console.error(error); loadData() }
     } else {
-      await supabase.from('votes').insert({ option_id: optionId, member_id: me.id })
+      const { error } = await supabase.from('votes').insert({ option_id: optionId, member_id: me.id })
+      if (error) { console.error(error); loadData() }
     }
-    // Realtime will trigger loadData
   }
 
   async function lockStage(stageId, optionId) {
