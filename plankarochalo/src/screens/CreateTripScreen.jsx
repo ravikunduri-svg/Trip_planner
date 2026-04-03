@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
+import posthog from 'posthog-js'
 import { supabase } from '../supabase'
 import { STAGE_TEMPLATES, MEMBER_COLORS } from '../data/stageTemplates'
 
@@ -74,6 +75,7 @@ export default function CreateTripScreen({ onBack, onCreated }) {
         if (optsErr) throw optsErr
       }
 
+      posthog.capture('trip_created', { vibe, group_size: groupSize })
       onCreated(trip, member)
     } catch (e) {
       setError('Something went wrong. Please try again.')

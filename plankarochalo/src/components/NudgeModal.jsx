@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import posthog from 'posthog-js'
 
 const NUDGES = [
   { text: 'Vote kar do warna trip cancel 😭',        vibe: '🔥 Urgent'  },
@@ -18,6 +19,7 @@ export default function NudgeModal({ onClose, shareUrl }) {
     navigator.clipboard.writeText(msg).catch(() => {})
     setCopied(text)
     setTimeout(() => setCopied(null), 1500)
+    posthog.capture('nudge_copied', { vibe: NUDGES.find(n => n.text === text)?.vibe })
   }
 
   return (

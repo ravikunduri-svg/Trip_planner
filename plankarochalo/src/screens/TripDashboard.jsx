@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ArrowLeft, Bell, Copy, Check, Users } from 'lucide-react'
+import posthog from 'posthog-js'
 import StageCard from '../components/StageCard'
 import TripPulse from '../components/TripPulse'
 import NudgeModal from '../components/NudgeModal'
@@ -120,12 +121,14 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
     } else {
       const { error } = await supabase.from('votes').insert({ option_id: optionId, member_id: me.id })
       if (error) { console.error(error); loadData() }
+      else posthog.capture('vote_cast', { stage_id: stageId })
     }
   }
 
   async function lockStage(stageId, optionId) {
     if (!me.is_organizer) return
     await supabase.from('stages').update({ status: 'locked', locked_option_id: optionId }).eq('id', stageId)
+    posthog.capture('stage_locked', { stage_id: stageId, trip_id: trip.id })
   }
 
   async function addOption(stageId, label) {
@@ -136,6 +139,7 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
     navigator.clipboard.writeText(shareUrl).catch(() => {})
     setLinkCopied(true)
     setTimeout(() => setLinkCopied(false), 2000)
+    posthog.capture('share_link_copied', { trip_id: trip.id })
   }
 
   // ── Derived state ──────────────────────────────────────────────
@@ -144,7 +148,10 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
   const allLocked = stages.length > 0 && lockedCount === stages.length
 
   useEffect(() => {
-    if (allLocked && !loading) onAllLocked({ ...trip, stages })
+    if (allLocked && !loading) {
+      posthog.capture('trip_locked', { trip_id: trip.id })
+      onAllLocked({ ...trip, stages })
+    }
   }, [allLocked])
 
   if (loading) {

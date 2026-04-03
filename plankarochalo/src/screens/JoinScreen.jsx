@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import posthog from 'posthog-js'
 import { supabase } from '../supabase'
 import { MEMBER_COLORS } from '../data/stageTemplates'
 
@@ -53,6 +54,7 @@ export default function JoinScreen({ tripId, onJoined, onNotFound }) {
       if (memberErr) throw memberErr
 
       localStorage.setItem(`pkc_member_${tripId}`, localKey)
+      posthog.capture('member_joined', { trip_id: tripId })
       onJoined(trip, member)
     } catch (e) {
       setError('Something went wrong. Please try again.')
