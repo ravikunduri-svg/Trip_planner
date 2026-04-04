@@ -5,6 +5,7 @@ import StageCard from '../components/StageCard'
 import TripPulse from '../components/TripPulse'
 import NudgeModal from '../components/NudgeModal'
 import ActivityFeed from '../components/ActivityFeed'
+import TripMindInsights from '../components/TripMindInsights'
 import { supabase } from '../supabase'
 import { logActivity } from '../lib/activity'
 
@@ -283,6 +284,8 @@ export default function TripDashboard({ trip, me, onAllLocked, onBack }) {
             ))}
           </div>
         </div>
+
+        <TripMindInsights trip={trip} stages={stages} members={members} />
 
         <TripPulse stages={stages} members={members} />
 
