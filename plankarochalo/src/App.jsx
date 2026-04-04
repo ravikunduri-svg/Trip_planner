@@ -7,6 +7,7 @@ import JoinGroupScreen from './screens/JoinGroupScreen'
 import GroupDashboard from './screens/GroupDashboard'
 import TripDashboard from './screens/TripDashboard'
 import TripLockedScreen from './screens/TripLockedScreen'
+import AdminScreen from './screens/AdminScreen'
 import { supabase } from './supabase'
 
 function setParam(key, value) {
@@ -18,7 +19,7 @@ function setParam(key, value) {
 
 function getParams() {
   const p = new URLSearchParams(window.location.search)
-  return { tripId: p.get('trip'), groupId: p.get('group') }
+  return { tripId: p.get('trip'), groupId: p.get('group'), isAdmin: p.get('admin') === '1' }
 }
 
 export default function App() {
@@ -30,7 +31,9 @@ export default function App() {
   const [fromGroup, setFromGroup] = useState(null) // groupId to return to
 
   useEffect(() => {
-    const { tripId, groupId } = getParams()
+    const { tripId, groupId, isAdmin } = getParams()
+
+    if (isAdmin) { setScreen('admin'); return }
 
     if (tripId) {
       const localKey = localStorage.getItem(`pkc_member_${tripId}`)
@@ -155,10 +158,13 @@ export default function App() {
 
   return (
     <>
+      {screen === 'admin' && <AdminScreen />}
       {screen === 'landing' && (
         <LandingScreen
           onStart={() => setScreen('create')}
           onCreateGroup={() => setScreen('create_group')}
+          onOpenGroup={gId => goToGroup(gId)}
+          onOpenTrip={handleOpenTripFromGroup}
         />
       )}
       {screen === 'create_group' && (
