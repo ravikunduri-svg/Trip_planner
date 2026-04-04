@@ -62,8 +62,6 @@ export default function ActivityFeed({ tripId, members }) {
     return () => supabase.removeChannel(channel)
   }, [tripId])
 
-  if (entries.length === 0) return null
-
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-50">
@@ -71,7 +69,9 @@ export default function ActivityFeed({ tripId, members }) {
         <p className="text-xs text-gray-400 mt-0.5">Everything that's happened in this trip</p>
       </div>
       <div className="divide-y divide-gray-50">
-        {entries.map(entry => {
+        {entries.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-4">No activity yet — start voting!</p>
+        ) : entries.map(entry => {
           const member = getMember(entry.member_id)
           return (
             <div key={entry.id} className="flex items-start gap-3 px-4 py-3">

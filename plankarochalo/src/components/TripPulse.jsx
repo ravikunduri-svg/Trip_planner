@@ -17,7 +17,7 @@ export default function TripPulse({ stages, members }) {
 
       <div className="p-4 space-y-3">
         {locked.map(stage => {
-          const opt = stage.options.find(o => o.id === stage.lockedOptionId)
+          const opt = stage.options.find(o => o.id === stage.locked_option_id)
           return (
             <div key={stage.id} className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full bg-green-500 flex-shrink-0 flex items-center justify-center">
