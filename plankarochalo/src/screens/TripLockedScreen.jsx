@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Share2, Plus } from 'lucide-react'
+import { Share2, Plus, Rocket } from 'lucide-react'
 
 function Detail({ emoji, label, value }) {
   return (
@@ -13,7 +13,7 @@ function Detail({ emoji, label, value }) {
   )
 }
 
-export default function TripLockedScreen({ trip, onNewTrip }) {
+export default function TripLockedScreen({ trip, onNewTrip, onBook }) {
   const [copied, setCopied] = useState(false)
 
   // Build locked map from stages array (DB shape: locked_option_id, stage_key)
@@ -66,6 +66,13 @@ export default function TripLockedScreen({ trip, onNewTrip }) {
 
       <div className="px-4 mt-6 space-y-3">
         <button
+          onClick={onBook}
+          className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-lg shadow-violet-200"
+        >
+          <Rocket size={16} />
+          Book Flights &amp; Hotels
+        </button>
+        <button
           onClick={handleShare}
           className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-lg shadow-green-200"
         >
@@ -78,9 +85,6 @@ export default function TripLockedScreen({ trip, onNewTrip }) {
         >
           <Plus size={16} /> Plan another trip
         </button>
-        <p className="text-center text-xs text-gray-400 italic pt-1">
-          Itinerary planning — coming soon ✈️
-        </p>
       </div>
 
       <div className="mt-auto pb-8 px-6 text-center">

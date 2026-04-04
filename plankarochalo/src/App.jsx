@@ -7,6 +7,7 @@ import JoinGroupScreen from './screens/JoinGroupScreen'
 import GroupDashboard from './screens/GroupDashboard'
 import TripDashboard from './screens/TripDashboard'
 import TripLockedScreen from './screens/TripLockedScreen'
+import TripBookingScreen from './screens/TripBookingScreen'
 import AdminScreen from './screens/AdminScreen'
 import { supabase } from './supabase'
 
@@ -131,6 +132,10 @@ export default function App() {
     setTrip(finalTrip); setScreen('locked')
   }
 
+  function handleBook() {
+    setScreen('booking')
+  }
+
   function handleOpenTripFromGroup(tripId) {
     setParam('trip', tripId)
     const localKey = localStorage.getItem(`pkc_member_${tripId}`)
@@ -215,6 +220,13 @@ export default function App() {
         <TripLockedScreen
           trip={trip}
           onNewTrip={() => fromGroup ? goToGroup(fromGroup) : goToLanding()}
+          onBook={handleBook}
+        />
+      )}
+      {screen === 'booking' && trip && (
+        <TripBookingScreen
+          trip={trip}
+          onBack={() => setScreen('locked')}
         />
       )}
     </>
