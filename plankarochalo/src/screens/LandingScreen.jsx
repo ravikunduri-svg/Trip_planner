@@ -1,4 +1,4 @@
-export default function LandingScreen({ onStart }) {
+export default function LandingScreen({ onStart, onCreateGroup }) {
   return (
     <div className="max-w-sm mx-auto min-h-dvh flex flex-col bg-white">
       {/* Top */}
@@ -61,10 +61,16 @@ export default function LandingScreen({ onStart }) {
       {/* CTA */}
       <div className="px-6 pb-10 mt-auto space-y-3">
         <button
-          onClick={onStart}
+          onClick={onCreateGroup}
           className="w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-lg shadow-violet-200"
         >
-          Start a Trip ✈️
+          Create a Group 👥
+        </button>
+        <button
+          onClick={onStart}
+          className="w-full bg-white hover:bg-gray-50 active:bg-gray-100 text-violet-600 font-bold py-4 rounded-2xl text-base transition-colors border-2 border-violet-200"
+        >
+          One-off Trip ✈️
         </button>
         <p className="text-center text-xs text-gray-400 pt-1">
           WhatsApp is great for chaos. This is for decisions.

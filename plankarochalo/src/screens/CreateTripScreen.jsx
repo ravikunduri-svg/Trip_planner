@@ -11,8 +11,8 @@ function getInitials(name) {
   return name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
-export default function CreateTripScreen({ onBack, onCreated }) {
-  const [organizerName, setOrganizerName] = useState('')
+export default function CreateTripScreen({ onBack, onCreated, groupId = null, groupMember = null }) {
+  const [organizerName, setOrganizerName] = useState(groupMember?.name || '')
   const [name, setName] = useState('')
   const [vibe, setVibe] = useState('')
   const [groupSize, setGroupSize] = useState(6)
@@ -31,7 +31,7 @@ export default function CreateTripScreen({ onBack, onCreated }) {
       // 1. Create trip
       const { data: trip, error: tripErr } = await supabase
         .from('trips')
-        .insert({ name: name.trim(), vibe, group_size: groupSize })
+        .insert({ name: name.trim(), vibe, group_size: groupSize, ...(groupId ? { group_id: groupId } : {}) })
         .select()
         .single()
       if (tripErr) throw tripErr

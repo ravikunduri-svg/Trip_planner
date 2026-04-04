@@ -1,100 +1,146 @@
 import { useState, useEffect } from 'react'
 import LandingScreen from './screens/LandingScreen'
 import CreateTripScreen from './screens/CreateTripScreen'
+import CreateGroupScreen from './screens/CreateGroupScreen'
 import JoinScreen from './screens/JoinScreen'
+import JoinGroupScreen from './screens/JoinGroupScreen'
+import GroupDashboard from './screens/GroupDashboard'
 import TripDashboard from './screens/TripDashboard'
 import TripLockedScreen from './screens/TripLockedScreen'
 import { supabase } from './supabase'
 
-function getLocalKey(tripId) {
-  return localStorage.getItem(`pkc_member_${tripId}`)
+function setParam(key, value) {
+  const url = new URL(window.location.href)
+  if (value) url.searchParams.set(key, value)
+  else url.searchParams.delete(key)
+  window.history.pushState({}, '', url)
+}
+
+function getParams() {
+  const p = new URLSearchParams(window.location.search)
+  return { tripId: p.get('trip'), groupId: p.get('group') }
 }
 
 export default function App() {
   const [screen, setScreen] = useState('loading')
-  const [tripId, setTripId] = useState(null)
   const [trip, setTrip] = useState(null)
-  const [me, setMe] = useState(null) // current member row
+  const [me, setMe] = useState(null)           // trip member
+  const [group, setGroup] = useState(null)
+  const [groupMe, setGroupMe] = useState(null) // group member
+  const [fromGroup, setFromGroup] = useState(null) // groupId to return to
 
-  // On mount: check URL for ?trip=uuid
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const id = params.get('trip')
-    if (id) {
-      setTripId(id)
-      // Check if we've already joined this trip
-      const localKey = getLocalKey(id)
-      if (localKey) {
-        loadTripAndMember(id, localKey)
-      } else {
-        setScreen('join')
-      }
+    const { tripId, groupId } = getParams()
+
+    if (tripId) {
+      const localKey = localStorage.getItem(`pkc_member_${tripId}`)
+      if (localKey) loadTripAndMember(tripId, localKey)
+      else setScreen('join')
+    } else if (groupId) {
+      const localKey = localStorage.getItem(`pkc_group_${groupId}`)
+      if (localKey) loadGroupAndMember(groupId, localKey)
+      else setScreen('join_group')
     } else {
       setScreen('landing')
     }
   }, [])
 
-  async function loadTripAndMember(id, localKey) {
-    const { data: tripData } = await supabase
-      .from('trips')
-      .select('*')
-      .eq('id', id)
-      .single()
-
+  async function loadTripAndMember(tripId, localKey) {
+    const { data: tripData } = await supabase.from('trips').select('*').eq('id', tripId).single()
     if (!tripData) { setScreen('landing'); return }
 
     const { data: memberData } = await supabase
-      .from('members')
-      .select('*')
-      .eq('trip_id', id)
-      .eq('local_key', localKey)
-      .single()
-
+      .from('members').select('*').eq('trip_id', tripId).eq('local_key', localKey).single()
     if (!memberData) { setScreen('join'); return }
+
+    const { data: stages } = await supabase
+      .from('stages').select('*, options(*)').eq('trip_id', tripId).order('position')
 
     setTrip(tripData)
     setMe(memberData)
 
-    const { data: stages } = await supabase
-      .from('stages')
-      .select('*, options(*)')
-      .eq('trip_id', id)
-      .order('position')
+    // If trip belongs to a group and we're a group member, remember it for back nav
+    if (tripData.group_id) {
+      const gKey = localStorage.getItem(`pkc_group_${tripData.group_id}`)
+      if (gKey) setFromGroup(tripData.group_id)
+    }
 
     const allLocked = stages?.every(s => s.status === 'locked')
     setScreen(allLocked ? 'locked' : 'dashboard')
   }
 
+  async function loadGroupAndMember(groupId, localKey) {
+    const { data: groupData } = await supabase.from('groups').select('*').eq('id', groupId).single()
+    if (!groupData) { setScreen('landing'); return }
+
+    const { data: memberData } = await supabase
+      .from('group_members').select('*').eq('group_id', groupId).eq('local_key', localKey).single()
+    if (!memberData) { setScreen('join_group'); return }
+
+    setGroup(groupData)
+    setGroupMe(memberData)
+    setScreen('group')
+  }
+
+  // ── Handlers ──────────────────────────────────────────────────
+
+  function goToLanding() {
+    setParam('trip', null); setParam('group', null)
+    setTrip(null); setMe(null); setGroup(null); setGroupMe(null); setFromGroup(null)
+    setScreen('landing')
+  }
+
+  function goToGroup(groupId) {
+    setParam('trip', null); setParam('group', groupId)
+    setTrip(null); setMe(null)
+    const localKey = localStorage.getItem(`pkc_group_${groupId}`)
+    loadGroupAndMember(groupId, localKey)
+  }
+
+  function handleGroupCreated(newGroup, member) {
+    setParam('group', newGroup.id); setParam('trip', null)
+    setGroup(newGroup); setGroupMe(member)
+    setScreen('group')
+  }
+
+  function handleGroupJoined(groupData, member) {
+    setGroup(groupData); setGroupMe(member)
+    setScreen('group')
+  }
+
   function handleTripCreated(newTrip, member) {
-    const url = new URL(window.location.href)
-    url.searchParams.set('trip', newTrip.id)
-    window.history.pushState({}, '', url)
-    setTripId(newTrip.id)
-    setTrip(newTrip)
-    setMe(member)
+    setParam('trip', newTrip.id)
+    setTrip(newTrip); setMe(member)
+    if (newTrip.group_id) setFromGroup(newTrip.group_id)
     setScreen('dashboard')
   }
 
-  function handleJoined(tripData, member) {
-    setTrip(tripData)
-    setMe(member)
+  function handleTripJoined(tripData, member) {
+    setTrip(tripData); setMe(member)
+    if (tripData.group_id) {
+      const gKey = localStorage.getItem(`pkc_group_${tripData.group_id}`)
+      if (gKey) setFromGroup(tripData.group_id)
+    }
     setScreen('dashboard')
   }
 
   function handleAllLocked(finalTrip) {
-    setTrip(finalTrip)
-    setScreen('locked')
+    setTrip(finalTrip); setScreen('locked')
   }
 
-  function handleNewTrip() {
-    const url = new URL(window.location.href)
-    url.searchParams.delete('trip')
-    window.history.pushState({}, '', url)
-    setTripId(null)
-    setTrip(null)
-    setMe(null)
-    setScreen('landing')
+  function handleOpenTripFromGroup(tripId) {
+    setParam('trip', tripId)
+    const localKey = localStorage.getItem(`pkc_member_${tripId}`)
+    if (localKey) loadTripAndMember(tripId, localKey)
+    else setScreen('join')
   }
+
+  function handleBackFromTrip() {
+    if (fromGroup) goToGroup(fromGroup)
+    else goToLanding()
+  }
+
+  const { tripId, groupId } = getParams()
 
   if (screen === 'loading') {
     return (
@@ -112,19 +158,43 @@ export default function App() {
       {screen === 'landing' && (
         <LandingScreen
           onStart={() => setScreen('create')}
+          onCreateGroup={() => setScreen('create_group')}
+        />
+      )}
+      {screen === 'create_group' && (
+        <CreateGroupScreen
+          onBack={() => setScreen('landing')}
+          onCreated={handleGroupCreated}
+        />
+      )}
+      {screen === 'join_group' && (
+        <JoinGroupScreen
+          groupId={groupId}
+          onJoined={handleGroupJoined}
+          onNotFound={goToLanding}
+        />
+      )}
+      {screen === 'group' && group && groupMe && (
+        <GroupDashboard
+          group={group}
+          me={groupMe}
+          onStartTrip={() => setScreen('create')}
+          onOpenTrip={handleOpenTripFromGroup}
         />
       )}
       {screen === 'create' && (
         <CreateTripScreen
-          onBack={() => setScreen('landing')}
+          onBack={() => fromGroup ? goToGroup(fromGroup) : group ? setScreen('group') : setScreen('landing')}
           onCreated={handleTripCreated}
+          groupId={group?.id ?? null}
+          groupMember={groupMe}
         />
       )}
       {screen === 'join' && (
         <JoinScreen
           tripId={tripId}
-          onJoined={handleJoined}
-          onNotFound={() => setScreen('landing')}
+          onJoined={handleTripJoined}
+          onNotFound={goToLanding}
         />
       )}
       {screen === 'dashboard' && trip && me && (
@@ -132,13 +202,13 @@ export default function App() {
           trip={trip}
           me={me}
           onAllLocked={handleAllLocked}
-          onBack={handleNewTrip}
+          onBack={handleBackFromTrip}
         />
       )}
       {screen === 'locked' && trip && me && (
         <TripLockedScreen
           trip={trip}
-          onNewTrip={handleNewTrip}
+          onNewTrip={() => fromGroup ? goToGroup(fromGroup) : goToLanding()}
         />
       )}
     </>
